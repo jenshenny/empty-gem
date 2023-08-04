@@ -1,0 +1,29 @@
+name: Release gem to RubyGems
+
+on: workflow_dispatch
+
+jobs:
+  job:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: rubygems/configure-rubygems-credentials@main
+        with:
+          role-to-assume: rg_oidc_akr_ttkhy79wv42nxvt7z1jw
+          gem-server: 'https://oidc-api-token.rubygems.org'
+          audience: 'https://oidc-api-token.rubygems.org'
+      - uses: actions/checkout@v3
+      - name: Set remote URL
+        run: |
+          git config --global user.email "$(git log -1 --pretty=format:'%ae')"
+          git config --global user.name "$(git log -1 --pretty=format:'%an')"
+          git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY"
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+          bundler-cache: true
+      - name: Release
+        run: bundle exec rake release
